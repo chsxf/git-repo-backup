@@ -1,0 +1,14 @@
+{
+  "autoload": {
+    "psr-4": {
+      "chsxf\\": "src/"
+    }
+  },
+  "bin": [
+    "bin/git-repo-backup"
+  ],
+  "require": {
+    "php": ">=8.1",
+    "ext-curl": "*"
+  }
+}
