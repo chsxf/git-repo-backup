@@ -7,6 +7,7 @@ enum CommandLineArgumentName: string
     case username = 'username';
     case password = 'password';
     case platform = 'platform';
+    case noGitLFS = 'no-git-lfs';
 }
 
 class CommandLineParser
@@ -62,20 +63,24 @@ class CommandLineParser
 
             foreach (self::$argumentsDescription as $argDescription) {
                 if ($argDescription instanceof CommandLineArgumentDescriptor && $argDescription->name === $argName) {
-                    for ($i = 0; $i < $argDescription->getTrailingArgumentCount(); $i++) {
-                        $argValue = self::handleNextArgument(required: true, mustBeTrailingArgument: true);
-                        if ($argValue === false) {
-                            Console::error("Missing parameter value for argument '%s'", $argName);
-                            return false;
-                        }
+                    if ($argDescription->getTrailingArgumentCount() > 0) {
+                        for ($i = 0; $i < $argDescription->getTrailingArgumentCount(); $i++) {
+                            $argValue = self::handleNextArgument(required: true, mustBeTrailingArgument: true);
+                            if ($argValue === false) {
+                                Console::error("Missing parameter value for argument '%s'", $argName);
+                                return false;
+                            }
 
-                        $conformedValue = $argDescription->conformTrailingArgumentValue($i, $argValue);
-                        if ($conformedValue === false) {
-                            Console::error("Invalid parameter value for argument '%s'", $argName);
-                            return false;
-                        }
+                            $conformedValue = $argDescription->conformTrailingArgumentValue($i, $argValue);
+                            if ($conformedValue === false) {
+                                Console::error("Invalid parameter value for argument '%s'", $argName);
+                                return false;
+                            }
 
-                        self::$parsedArguments[$argDescription->getTrailingArgumentName($i)] = $conformedValue;
+                            self::$parsedArguments[$argDescription->getTrailingArgumentName($i)] = $conformedValue;
+                        }
+                    } else {
+                        self::$parsedArguments[$argName] = true;
                     }
                 }
             }
@@ -152,16 +157,22 @@ class CommandLineParser
                     trailingArguments: [CommandLineArgumentName::platform->value],
                     description: "Platform to authenticate with (only 'GitHub' and 'BitBucket' are supported at the moment)\nThis setting is case-insensitive",
                     acceptedValues: [['github', 'bitbucket']]
+                ),
+                new CommandLineArgumentDescriptor(
+                    name: CommandLineArgumentName::noGitLFS->value,
+                    longForm: true,
+                    description: "If present, git-lfs is not checked or explictly used during the execution of the script",
+                    required: false
                 )
             ];
         }
     }
 
-    public static function getArgumentValue(CommandLineArgumentName $argumentName): ?string
+    public static function getArgumentValue(CommandLineArgumentName $argumentName, mixed $defaultValue = null): mixed
     {
         if (array_key_exists($argumentName->value, self::$parsedArguments)) {
             return self::$parsedArguments[$argumentName->value];
         }
-        return null;
+        return $defaultValue;
     }
 }

@@ -16,13 +16,15 @@ class GitHandler
             return false;
         }
 
-        Console::log('Looking for git-lfs...');
-        $result = exec('git lfs version');
-        if ($result !== false && preg_match('/^git-lfs\/\d+\.\d+\.\d+/', $result)) {
-            Console::success('%s', $result);
-        } else {
-            Console::error('It seems git-lfs is not installed on the system or not accessible in the current environement');
-            return false;
+        if (!CommandLineParser::getArgumentValue(CommandLineArgumentName::noGitLFS, defaultValue: false)) {
+            Console::log('Looking for git-lfs...');
+            $result = exec('git lfs version');
+            if ($result !== false && preg_match('/^git-lfs\/\d+\.\d+\.\d+/', $result)) {
+                Console::success('%s', $result);
+            } else {
+                Console::error('It seems git-lfs is not installed on the system or not accessible in the current environement');
+                return false;
+            }
         }
 
         return true;
