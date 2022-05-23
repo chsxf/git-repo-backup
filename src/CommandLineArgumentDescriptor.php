@@ -1,6 +1,6 @@
 <?php
 
-namespace chsxf;
+namespace chsxf\GitRepoBackup;
 
 class CommandLineArgumentDescriptor
 {
