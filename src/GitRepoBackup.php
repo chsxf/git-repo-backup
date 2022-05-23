@@ -2,9 +2,18 @@
 
 namespace chsxf\GitRepoBackup;
 
+use chsxf\GitRepoBackup\PlatformHandlers\BitBucketPlatformHandler;
+use chsxf\GitRepoBackup\PlatformHandlers\GitHubPlatformHandler;
+use chsxf\GitRepoBackup\PlatformHandlers\AbstractPlatformHandler;
+
 class GitRepoBackup
 {
     private const VERSION = '1.0.0';
+
+    private static array $platformHandlerClasses = [
+        'github' => GitHubPlatformHandler::class,
+        'bitbucket' => BitBucketPlatformHandler::class
+    ];
 
     public static function run()
     {
@@ -26,6 +35,27 @@ class GitRepoBackup
         }
 
         Console::empty();
-        Console::log("Running with platform: %s", CommandLineParser::getArgumentValue(CommandLineArgumentName::platform));
+        $platform = CommandLineParser::getArgumentValue(CommandLineArgumentName::platform);
+        Console::log("Running with platform: %s", $platform);
+
+        $username = CommandLineParser::getArgumentValue(CommandLineArgumentName::username);
+        $password = CommandLineParser::getArgumentValue(CommandLineArgumentName::password);
+
+        $platformHandlerClass = self::$platformHandlerClasses[$platform];
+        $platformHandler = new $platformHandlerClass($username, $password);
+        self::proceedWithPlatformHandler($platformHandler);
+    }
+
+    private static function proceedWithPlatformHandler(AbstractPlatformHandler $platformHandler)
+    {
+        Console::empty();
+        Console::log('Fetching repository list...');
+
+        $repositories = $platformHandler->fetchRepositoryList();
+        if ($repositories === false) {
+            Console::error('Fetching repository list failed');
+        } else {
+            Console::success('Found %d repositories', count($repositories));
+        }
     }
 }
