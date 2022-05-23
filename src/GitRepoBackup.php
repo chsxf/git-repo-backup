@@ -16,5 +16,14 @@ class GitRepoBackup
         if (!GitHandler::checkGitAvailability()) {
             exit();
         }
+
+        Console::empty();
+        if (!CommandLineParser::parse()) {
+            Console::empty();
+            CommandLineParser::showUsage();
+            exit();
+        }
+
+        Console::log("Running with platform: %s", CommandLineParser::getArgumentValue(CommandLineArgumentName::platform));
     }
 }
