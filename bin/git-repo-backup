@@ -1,0 +1,8 @@
+#!/usr/bin/env php
+<?php
+
+use chsxf\GitRepoBackup;
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
+GitRepoBackup::run();
