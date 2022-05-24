@@ -8,6 +8,8 @@ enum CommandLineArgumentName: string
     case password = 'password';
     case platform = 'platform';
     case noGitLFS = 'no-git-lfs';
+    case destPath = 'destination-path';
+    case cloneProtocol = 'clone-protocol';
 }
 
 class CommandLineParser
@@ -33,6 +35,13 @@ class CommandLineParser
                 if ($argDescription->required && !array_key_exists($argDescription->name, self::$parsedArguments)) {
                     Console::error("Required argument '%s' is missing", $argDescription->name);
                     return false;
+                }
+
+                if (!empty($argDescription->customValidationCallable)) {
+                    $closure = $argDescription->customValidationCallable;
+                    if ($closure() === false) {
+                        return false;
+                    }
                 }
             }
         }
@@ -141,28 +150,38 @@ class CommandLineParser
             self::$argumentsDescription = [
                 new CommandLineArgumentDescriptor(
                     name: CommandLineArgumentName::username->value,
-                    longForm: true,
                     trailingArguments: [CommandLineArgumentName::username->value],
                     description: "User name used to authenticate with the platform's API."
                 ),
                 new CommandLineArgumentDescriptor(
                     name: CommandLineArgumentName::password->value,
-                    longForm: true,
                     trailingArguments: [CommandLineArgumentName::password->value],
                     description: "Password, OAuth token, or personal access token used to authenticate with the platform's API."
                 ),
                 new CommandLineArgumentDescriptor(
                     name: CommandLineArgumentName::platform->value,
-                    longForm: true,
                     trailingArguments: [CommandLineArgumentName::platform->value],
-                    description: "Platform to authenticate with (only 'GitHub' and 'BitBucket' are supported at the moment)\nThis setting is case-insensitive",
+                    description: "Platform to authenticate with (only 'GitHub' and 'BitBucket' are supported at the moment)\nThis setting is not case-sensitive",
                     acceptedValues: [['github', 'bitbucket']]
                 ),
                 new CommandLineArgumentDescriptor(
                     name: CommandLineArgumentName::noGitLFS->value,
-                    longForm: true,
                     description: "If present, git-lfs is not checked or explictly used during the execution of the script",
                     required: false
+                ),
+                new CommandLineArgumentDescriptor(
+                    name: 'dest-dir',
+                    trailingArguments: [CommandLineArgumentName::destPath->value],
+                    description: "Target directory into which cloning or updating the repositories. If not present, the script uses the current directory.",
+                    required: false,
+                    customValidationCallable: self::validateDestinationPath(...)
+                ),
+                new CommandLineArgumentDescriptor(
+                    name: CommandLineArgumentName::cloneProtocol->value,
+                    trailingArguments: [CommandLineArgumentName::cloneProtocol->value],
+                    description: "Use HTTPS or SSH as the clone protocol\nThis setting is not case-sensitive",
+                    required: true,
+                    acceptedValues: [['https', 'ssh']]
                 )
             ];
         }
@@ -174,5 +193,15 @@ class CommandLineParser
             return self::$parsedArguments[$argumentName->value];
         }
         return $defaultValue;
+    }
+
+    private static function validateDestinationPath(): bool
+    {
+        $destPath = self::getArgumentValue(CommandLineArgumentName::destPath);
+        if (!empty($destPath) && !is_dir($destPath)) {
+            Console::error("'%s' does not exist or is not a directory, and therefore is not a valid destination path", $destPath);
+            return false;
+        }
+        return true;
     }
 }

@@ -29,22 +29,22 @@ class BitBucketPlatformHandler extends AbstractPlatformHandler
                         continue;
                     }
 
-                    $cloneURL = null;
+                    $httpsURL = null;
                     $sshURL = null;
                     foreach ($repo->links->clone as $cloneLink) {
                         if ($cloneLink->name === 'https') {
-                            $cloneURL = $cloneLink->href;
+                            $httpsURL = $cloneLink->href;
                         } else if ($cloneLink->name === 'ssh') {
                             $sshURL = $cloneLink->href;
                         }
                     }
 
-                    if (empty($cloneURL) || empty($sshURL)) {
+                    if (empty($httpsURL) || empty($sshURL)) {
                         Console::error('Missing clone URL or SSH URL for repository %s', $repo->name);
                         return false;
                     }
 
-                    $repositories[] = new RepositoryInfo($repo->name, $cloneURL, $sshURL, $repo->mainbranch->name);
+                    $repositories[] = new RepositoryInfo($repo->name, $httpsURL, $sshURL, $repo->mainbranch->name);
                 }
             }
 

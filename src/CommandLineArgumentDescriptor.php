@@ -2,15 +2,18 @@
 
 namespace chsxf\GitRepoBackup;
 
+use Closure;
+
 class CommandLineArgumentDescriptor
 {
     public function __construct(
         public readonly string $name,
-        public readonly bool $longForm,
+        public readonly bool $longForm = true,
         private readonly array $trailingArguments = [],
         public readonly bool $required = true,
         public readonly string $description = '',
-        private readonly ?array $acceptedValues = null
+        private readonly ?array $acceptedValues = null,
+        public readonly ?Closure $customValidationCallable = null
     ) {
     }
 

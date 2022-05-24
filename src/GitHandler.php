@@ -8,8 +8,8 @@ class GitHandler
     {
         Console::log('Looking for git...');
 
-        $result = exec('git --version');
-        if ($result !== false && preg_match('/^git version \d+\.\d+\.\d+/', $result)) {
+        $exitCode = Process::exec('git --version', $result);
+        if ($exitCode === 0 && preg_match('/^git version \d+\.\d+\.\d+/', $result)) {
             Console::success('%s', $result);
         } else {
             Console::error('It seems git is not installed on the system or not accessible in the current environment');
@@ -18,8 +18,8 @@ class GitHandler
 
         if (!CommandLineParser::getArgumentValue(CommandLineArgumentName::noGitLFS, defaultValue: false)) {
             Console::log('Looking for git-lfs...');
-            $result = exec('git lfs version');
-            if ($result !== false && preg_match('/^git-lfs\/\d+\.\d+\.\d+/', $result)) {
+            $exitCode = Process::exec('git lfs version', $result);
+            if ($exitCode === 0 && preg_match('/^git-lfs\/\d+\.\d+\.\d+/', $result)) {
                 Console::success('%s', $result);
             } else {
                 Console::error('It seems git-lfs is not installed on the system or not accessible in the current environement');

@@ -74,6 +74,11 @@ class Console
         self::resetColor();
     }
 
+    public static function print(string $format, mixed ...$values)
+    {
+        printf($format, ...$values);
+    }
+
     public static function setColor(ConsoleColor $color)
     {
         if (PHP_OS_FAMILY != 'Windows') {
