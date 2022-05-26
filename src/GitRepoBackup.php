@@ -112,29 +112,29 @@ class GitRepoBackup
 
         switch ($strategy) {
             case UpdateStrategy::clone:
-                if (!self::cloneRepository($repositoryInfo, $repositoryPath)) {
+                if (!GitHandler::cloneRepository($repositoryInfo, $repositoryPath)) {
                     Console::error('Clone failed');
                     return false;
                 }
 
-                if (!self::updateSubmodules($repositoryPath)) {
+                if (!GitHandler::updateSubmodules($repositoryPath)) {
                     Console::error('Submodule update failed');
                     return false;
                 }
                 break;
 
             case UpdateStrategy::fetchPull:
-                if (!self::fetchRepository($repositoryPath)) {
+                if (!GitHandler::fetchRepository($repositoryPath)) {
                     Console::error('Repository fetch failed');
                     return false;
                 }
 
-                if (!self::pullRepository($repositoryPath)) {
+                if (!GitHandler::pullRepository($repositoryPath)) {
                     Console::error('Repository pull failed');
                     return false;
                 }
 
-                if (!self::updateSubmodules($repositoryPath)) {
+                if (!GitHandler::updateSubmodules($repositoryPath)) {
                     Console::error('Submodule update failed');
                     return false;
                 }
@@ -168,67 +168,5 @@ class GitRepoBackup
         }
 
         return UpdateStrategy::fetchPull;
-    }
-
-    private static function cloneRepository(RepositoryInfo $repositoryInfo, string $repositoryPath): bool
-    {
-        $cloneMethod = CommandLineParser::getArgumentValue(CommandLineArgumentName::cloneProtocol);
-        $url = ($cloneMethod === 'ssh') ? $repositoryInfo->sshURL : $repositoryInfo->httpsURL;
-
-        $cmd = "git clone --branch {$repositoryInfo->defaultBranch} {$url} {$repositoryPath}";
-
-        Console::setColor(ConsoleColor::FgCyan);
-        Console::empty();
-        $result = passthru($cmd, $exitCode);
-        Console::resetColor();
-        return ($result === null && $exitCode === 0);
-    }
-
-    private static function updateSubmodules(string $repositoryPath): bool
-    {
-        $cwd = getcwd();
-        chdir($repositoryPath);
-
-        $cmd = "git submodule update --init --recursive";
-
-        Console::setColor(ConsoleColor::FgCyan);
-        Console::empty();
-        $result = passthru($cmd, $exitCode);
-        Console::resetColor();
-
-        chdir($cwd);
-        return ($result === null && $exitCode === 0);
-    }
-
-    private static function fetchRepository(string $repositoryPath): bool
-    {
-        $cwd = getcwd();
-        chdir($repositoryPath);
-
-        $cmd = "git fetch --all --tags --prune --prune-tags --recurse-submodules";
-
-        Console::setColor(ConsoleColor::FgCyan);
-        Console::empty();
-        $result = passthru($cmd, $exitCode);
-        Console::resetColor();
-
-        chdir($cwd);
-        return ($result === null && $exitCode === 0);
-    }
-
-    private static function pullRepository(string $repositoryPath): bool
-    {
-        $cwd = getcwd();
-        chdir($repositoryPath);
-
-        $cmd = "git pull";
-
-        Console::setColor(ConsoleColor::FgCyan);
-        Console::empty();
-        $result = passthru($cmd, $exitCode);
-        Console::resetColor();
-
-        chdir($cwd);
-        return ($result === null && $exitCode === 0);
     }
 }
