@@ -44,7 +44,7 @@ class BitBucketPlatformHandler extends AbstractPlatformHandler
                         return false;
                     }
 
-                    $repositories[] = new RepositoryInfo($repo->name, $httpsURL, $sshURL, $repo->mainbranch->name);
+                    $repositories[] = new RepositoryInfo($repo->name, $httpsURL, $sshURL, $repo->mainbranch->name, $repo->size);
                 }
             }
 

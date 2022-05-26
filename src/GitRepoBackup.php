@@ -138,6 +138,16 @@ class GitRepoBackup
         return $filteredRepositories;
     }
 
+    private static function getHumanReadableSize(int $size): string
+    {
+        $unit = 'KB';
+        if ($size > 1024) {
+            $size /= 1024;
+            $unit = 'MB';
+        }
+        return sprintf('%d %s', $size, $unit);
+    }
+
     private static function proceedForRepository(RepositoryInfo $repositoryInfo): bool
     {
         Console::empty();
@@ -166,6 +176,8 @@ class GitRepoBackup
         Console::increaseIndent();
         Console::log('Clone URL: %s', $url);
         Console::log('Default branch: %s', $repositoryInfo->defaultBranch);
+        Console::log('Size: %s', self::getHumanReadableSize($repositoryInfo->size));
+        Console::decreaseIndent();
         Console::decreaseIndent();
 
         switch ($strategy) {
@@ -201,7 +213,6 @@ class GitRepoBackup
             default:
                 break;
         }
-        Console::decreaseIndent();
 
         return true;
     }

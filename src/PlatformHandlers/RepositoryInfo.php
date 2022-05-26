@@ -8,7 +8,8 @@ class RepositoryInfo
         public readonly string $name,
         public readonly string $httpsURL,
         public readonly string $sshURL,
-        public readonly string $defaultBranch
+        public readonly string $defaultBranch,
+        public readonly int $size
     ) {
     }
 }

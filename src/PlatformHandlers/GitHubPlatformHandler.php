@@ -22,7 +22,7 @@ class GitHubPlatformHandler extends AbstractPlatformHandler
             }
 
             foreach ($requestResult->response as $repo) {
-                $repositories[] = new RepositoryInfo($repo->name, $repo->clone_url, $repo->ssh_url, $repo->default_branch);
+                $repositories[] = new RepositoryInfo($repo->name, $repo->clone_url, $repo->ssh_url, $repo->default_branch, $repo->size);
             }
 
             $nextRequest = null;
