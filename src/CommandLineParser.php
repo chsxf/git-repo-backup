@@ -13,6 +13,8 @@ enum CommandLineArgumentName: string
     case sshKeyPath = 'ssh-key-path';
     case excludedRepositories = 'excluded-repositories';
     case dryRun = 'dry-run';
+    case sortBy = 'sort-by';
+    case sortOrder = 'sort-order';
 }
 
 class CommandLineParser
@@ -227,6 +229,13 @@ class CommandLineParser
                     name: CommandLineArgumentName::dryRun->value,
                     description: "If present, no clone or fetch/pull operation is done, and only repositories information are reported",
                     required: false
+                ),
+                new CommandLineArgumentDescriptor(
+                    name: CommandLineArgumentName::sortBy->value,
+                    trailingArguments: [CommandLineArgumentName::sortBy->value, CommandLineArgumentName::sortOrder->value],
+                    description: "Specific how repositories are sorted before being processed\nOptions are by name (default) or by size\nOrder can be ascending (asc) or descending (desc)",
+                    required: false,
+                    acceptedValues: [['size', 'name'], ['asc', 'desc']]
                 )
             ];
         }

@@ -77,28 +77,33 @@ class GitRepoBackup
         if ($repositories === false) {
             Console::error('Fetching repository list failed');
         } else {
-            Console::success('Found %d repositories', count($repositories));
+            $repositoryCount = count($repositories);
+            Console::success('Found %d repositories', $repositoryCount);
 
-            $filteredRepositories = self::filterRepositories($repositories, $excludedRepositories);
-            $diff = count($repositories) - count($filteredRepositories);
-            if ($diff > 0) {
-                if ($diff == 1) {
-                    Console::log('1 repository excluded:');
-                } else {
-                    Console::log('%d repositories excluded:', $diff);
+            if ($repositoryCount > 0) {
+                $filteredRepositories = self::filterRepositories($repositories, $excludedRepositories);
+                $diff = $repositoryCount - count($filteredRepositories);
+                if ($diff > 0) {
+                    if ($diff == 1) {
+                        Console::log('1 repository excluded:');
+                    } else {
+                        Console::log('%d repositories excluded:', $diff);
+                    }
+                    Console::increaseIndent();
+                    foreach ($excludedRepositories as $repo) {
+                        Console::log($repo->name);
+                    }
+                    Console::decreaseIndent();
+                    Console::success('Proceeding with %d repositories', $repositoryCount - $diff);
                 }
-                Console::increaseIndent();
-                foreach ($excludedRepositories as $repo) {
-                    Console::log($repo->name);
+
+                self::sortRepositories($filteredRepositories);
+
+                Console::empty();
+
+                foreach ($filteredRepositories as $repoInfo) {
+                    self::proceedForRepository($repoInfo);
                 }
-                Console::decreaseIndent();
-                Console::success('Proceeding with %d repositories', count($repositories) - $diff);
-            }
-
-            Console::empty();
-
-            foreach ($filteredRepositories as $repoInfo) {
-                self::proceedForRepository($repoInfo);
             }
         }
     }
@@ -142,6 +147,22 @@ class GitRepoBackup
             }
         }
         return $filteredRepositories;
+    }
+
+    private static function sortRepositories(array &$repositories)
+    {
+        $sortBy = CommandLineParser::getArgumentValue(CommandLineArgumentName::sortBy, defaultValue: 'name');
+        $sortOrder = CommandLineParser::getArgumentValue(CommandLineArgumentName::sortOrder, defaultValue: 'asc');
+        $ascending = ($sortOrder === 'asc');
+
+        usort($repositories, function ($a, $b) use ($sortBy, $ascending) {
+            if ($sortBy === 'name') {
+                $result = strcasecmp($a->name, $b->name);
+            } else {
+                $result = $a->size - $b->size;
+            }
+            return $ascending ? $result : -$result;
+        });
     }
 
     private static function getHumanReadableSize(int $size): string
