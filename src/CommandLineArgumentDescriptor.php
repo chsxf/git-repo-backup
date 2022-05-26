@@ -13,7 +13,8 @@ class CommandLineArgumentDescriptor
         public readonly bool $required = true,
         public readonly string $description = '',
         private readonly ?array $acceptedValues = null,
-        public readonly ?Closure $customValidationCallable = null
+        public readonly ?Closure $customValidationCallable = null,
+        private readonly ?CommandLineArgumentOSFamilySupport $osFamilySupport = null
     ) {
     }
 
@@ -55,5 +56,18 @@ class CommandLineArgumentDescriptor
             return false;
         }
         return $value;
+    }
+
+    public function validatesOSFamily(): bool
+    {
+        if (!empty($this->osFamilySupport)) {
+            $contained = in_array(PHP_OS_FAMILY, $this->osFamilySupport->osFamilies);
+            if ($contained) {
+                return $this->osFamilySupport->included;
+            } else {
+                return !$this->osFamilySupport->included;
+            }
+        }
+        return true;
     }
 }

@@ -18,6 +18,7 @@ class CommandLineParser
 
     private static int $currentArgumentIndex;
     private static array $parsedArguments;
+    private static array $parsedArgumentValues;
 
     public static function parse(): bool
     {
@@ -25,14 +26,25 @@ class CommandLineParser
 
         self::$currentArgumentIndex = 1;
         self::$parsedArguments = [];
+        self::$parsedArgumentValues = [];
 
         do {
             $nextArgument = self::handleNextArgument(required: false);
-        } while ($nextArgument !== false && $nextArgument !== null);
+            if ($nextArgument === false) {
+                return false;
+            }
+        } while ($nextArgument !== null);
 
         foreach (self::$argumentsDescription as $argDescription) {
             if ($argDescription instanceof CommandLineArgumentDescriptor) {
-                if ($argDescription->required && !array_key_exists($argDescription->name, self::$parsedArguments)) {
+                $parameterIsPresent = in_array($argDescription->name, self::$parsedArguments);
+
+                if ($parameterIsPresent && !$argDescription->validatesOSFamily()) {
+                    Console::error("Argument '%s' is not valid for this OS family", $argDescription->name);
+                    return false;
+                }
+
+                if ($argDescription->required && !$parameterIsPresent) {
                     Console::error("Required argument '%s' is missing", $argDescription->name);
                     return false;
                 }
@@ -70,8 +82,11 @@ class CommandLineParser
         if ($isLeadingArgument) {
             $argName = $regs[1];
 
+            $found = false;
+
             foreach (self::$argumentsDescription as $argDescription) {
                 if ($argDescription instanceof CommandLineArgumentDescriptor && $argDescription->name === $argName) {
+                    $found = true;
                     if ($argDescription->getTrailingArgumentCount() > 0) {
                         for ($i = 0; $i < $argDescription->getTrailingArgumentCount(); $i++) {
                             $argValue = self::handleNextArgument(required: true, mustBeTrailingArgument: true);
@@ -86,12 +101,19 @@ class CommandLineParser
                                 return false;
                             }
 
-                            self::$parsedArguments[$argDescription->getTrailingArgumentName($i)] = $conformedValue;
+                            self::$parsedArgumentValues[$argDescription->getTrailingArgumentName($i)] = $conformedValue;
                         }
+                        self::$parsedArguments[] = $argName;
                     } else {
-                        self::$parsedArguments[$argName] = true;
+                        self::$parsedArgumentValues[$argName] = true;
+                        self::$parsedArguments[] = $argName;
                     }
                 }
+            }
+
+            if (!$found) {
+                Console::error("'%s' is not a valid arugment", $regs[0]);
+                return false;
             }
 
             return true;
@@ -189,8 +211,8 @@ class CommandLineParser
 
     public static function getArgumentValue(CommandLineArgumentName $argumentName, mixed $defaultValue = null): mixed
     {
-        if (array_key_exists($argumentName->value, self::$parsedArguments)) {
-            return self::$parsedArguments[$argumentName->value];
+        if (array_key_exists($argumentName->value, self::$parsedArgumentValues)) {
+            return self::$parsedArgumentValues[$argumentName->value];
         }
         return $defaultValue;
     }
