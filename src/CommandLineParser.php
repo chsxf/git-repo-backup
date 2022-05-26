@@ -11,6 +11,7 @@ enum CommandLineArgumentName: string
     case destPath = 'destination-path';
     case cloneProtocol = 'clone-protocol';
     case sshKeyPath = 'ssh-key-path';
+    case excludedRepositories = 'excluded-repositories';
 }
 
 class CommandLineParser
@@ -213,6 +214,13 @@ class CommandLineParser
                     required: false,
                     osFamilySupport: new CommandLineArgumentOSFamilySupport(false, ['Windows']),
                     customValidationCallable: self::validateSSHKey(...)
+                ),
+                new CommandLineArgumentDescriptor(
+                    name: 'exclude',
+                    trailingArguments: [CommandLineArgumentName::excludedRepositories->value],
+                    description: "Comma-separated list of excluded repositories\nEach entry can be either an exact match if containing only alphanumerical characters, hyphens and underscores, or a case-insensitive Perl-Compatible Regular Expression otherwise",
+                    required: false,
+                    customValidationCallable: self::validateExclusionFilter(...)
                 )
             ];
         }
@@ -242,6 +250,36 @@ class CommandLineParser
         if (!empty($sshKeyPath) && !file_exists($sshKeyPath)) {
             Console::error("'%s' does not exist, and therefore is not a valid SSH key path", $sshKeyPath);
             return false;
+        }
+        return true;
+    }
+
+    private static function validateExclusionFilter(): bool
+    {
+        $exclusionFilter = self::getArgumentValue(CommandLineArgumentName::excludedRepositories);
+        if (!empty($exclusionFilter)) {
+            $chunks = explode(',', $exclusionFilter);
+            $invalidChunk = null;
+            foreach ($chunks as $chunk) {
+                if (empty(trim($chunk))) {
+                    $invalidChunk = $chunk;
+                    break;
+                }
+
+                if (!preg_match('/^[a-z0-9_-]+$/i', $chunk)) {
+                    $escapedChunk = str_replace('/', '\/', $chunk);
+
+                    $test = @preg_match("/{$escapedChunk}/i", '');
+                    if ($test === false) {
+                        $invalidChunk = $chunk;
+                        break;
+                    }
+                }
+            }
+            if ($invalidChunk !== null) {
+                Console::error("Filter '%s' is malformed", $invalidChunk);
+                return false;
+            }
         }
         return true;
     }

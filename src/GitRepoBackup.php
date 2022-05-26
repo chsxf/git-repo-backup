@@ -72,12 +72,70 @@ class GitRepoBackup
             Console::error('Fetching repository list failed');
         } else {
             Console::success('Found %d repositories', count($repositories));
+
+            $filteredRepositories = self::filterRepositories($repositories, $excludedRepositories);
+            $diff = count($repositories) - count($filteredRepositories);
+            if ($diff > 0) {
+                if ($diff == 1) {
+                    Console::log('1 repository excluded:');
+                } else {
+                    Console::log('%d repositories excluded:', $diff);
+                }
+                Console::increaseIndent();
+                foreach ($excludedRepositories as $repo) {
+                    Console::log($repo->name);
+                }
+                Console::decreaseIndent();
+                Console::success('Proceeding with %d repositories', count($repositories) - $diff);
+            }
+
             Console::empty();
 
-            foreach ($repositories as $repoInfo) {
+            foreach ($filteredRepositories as $repoInfo) {
                 self::proceedForRepository($repoInfo);
             }
         }
+    }
+
+    private static function filterRepositories(array $repositories, ?array &$excludedRepositories): array
+    {
+        $exclusionFilters = CommandLineParser::getArgumentValue(CommandLineArgumentName::excludedRepositories);
+        if (empty($exclusionFilters)) {
+            return $repositories;
+        }
+
+        $filteredRepositories = [];
+        $exclusionFilters = explode(',', $exclusionFilters);
+        foreach ($exclusionFilters as &$filter) {
+            if (!preg_match('/^[a-z0-9_-]+$/i', $filter)) {
+                $filter = str_replace('/', '\/', $filter);
+                $filter = "/{$filter}/i";
+            }
+        }
+        unset($filter);
+
+        foreach ($repositories as $repo) {
+            if ($repo instanceof RepositoryInfo) {
+                $included = true;
+                foreach ($exclusionFilters as $filter) {
+                    if (preg_match('/^\//', $filter)) {
+                        if (preg_match($filter, $repo->name)) {
+                            $included = false;
+                            break;
+                        }
+                    } else if ($repo->name === $filter) {
+                        $included = false;
+                        break;
+                    }
+                }
+                if ($included) {
+                    $filteredRepositories[] = $repo;
+                } else {
+                    $excludedRepositories[] = $repo;
+                }
+            }
+        }
+        return $filteredRepositories;
     }
 
     private static function proceedForRepository(RepositoryInfo $repositoryInfo): bool
