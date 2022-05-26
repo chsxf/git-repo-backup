@@ -12,6 +12,7 @@ enum CommandLineArgumentName: string
     case cloneProtocol = 'clone-protocol';
     case sshKeyPath = 'ssh-key-path';
     case excludedRepositories = 'excluded-repositories';
+    case dryRun = 'dry-run';
 }
 
 class CommandLineParser
@@ -221,6 +222,11 @@ class CommandLineParser
                     description: "Comma-separated list of excluded repositories\nEach entry can be either an exact match if containing only alphanumerical characters, hyphens and underscores, or a case-insensitive Perl-Compatible Regular Expression otherwise",
                     required: false,
                     customValidationCallable: self::validateExclusionFilter(...)
+                ),
+                new CommandLineArgumentDescriptor(
+                    name: CommandLineArgumentName::dryRun->value,
+                    description: "If present, no clone or fetch/pull operation is done, and only repositories information are reported",
+                    required: false
                 )
             ];
         }

@@ -49,6 +49,12 @@ class GitRepoBackup
         Console::log("Running with platform: %s", $platform);
         Console::log("in path: %s", self::getBasePath());
 
+        $dryRun = CommandLineParser::getArgumentValue(CommandLineArgumentName::dryRun, defaultValue: false);
+        if ($dryRun === true) {
+            Console::empty();
+            Console::warning('Dry-run');
+        }
+
         $username = CommandLineParser::getArgumentValue(CommandLineArgumentName::username);
         $password = CommandLineParser::getArgumentValue(CommandLineArgumentName::password);
 
@@ -180,38 +186,41 @@ class GitRepoBackup
         Console::decreaseIndent();
         Console::decreaseIndent();
 
-        switch ($strategy) {
-            case UpdateStrategy::clone:
-                if (!GitHandler::cloneRepository($repositoryInfo, $repositoryPath)) {
-                    Console::error('Clone failed');
-                    return false;
-                }
+        $dryRun = CommandLineParser::getArgumentValue(CommandLineArgumentName::dryRun, defaultValue: false);
+        if ($dryRun === false) {
+            switch ($strategy) {
+                case UpdateStrategy::clone:
+                    if (!GitHandler::cloneRepository($repositoryInfo, $repositoryPath)) {
+                        Console::error('Clone failed');
+                        return false;
+                    }
 
-                if (!GitHandler::updateSubmodules($repositoryPath)) {
-                    Console::error('Submodule update failed');
-                    return false;
-                }
-                break;
+                    if (!GitHandler::updateSubmodules($repositoryPath)) {
+                        Console::error('Submodule update failed');
+                        return false;
+                    }
+                    break;
 
-            case UpdateStrategy::fetchPull:
-                if (!GitHandler::fetchRepository($repositoryPath)) {
-                    Console::error('Repository fetch failed');
-                    return false;
-                }
+                case UpdateStrategy::fetchPull:
+                    if (!GitHandler::fetchRepository($repositoryPath)) {
+                        Console::error('Repository fetch failed');
+                        return false;
+                    }
 
-                if (!GitHandler::pullRepository($repositoryPath)) {
-                    Console::error('Repository pull failed');
-                    return false;
-                }
+                    if (!GitHandler::pullRepository($repositoryPath)) {
+                        Console::error('Repository pull failed');
+                        return false;
+                    }
 
-                if (!GitHandler::updateSubmodules($repositoryPath)) {
-                    Console::error('Submodule update failed');
-                    return false;
-                }
-                break;
+                    if (!GitHandler::updateSubmodules($repositoryPath)) {
+                        Console::error('Submodule update failed');
+                        return false;
+                    }
+                    break;
 
-            default:
-                break;
+                default:
+                    break;
+            }
         }
 
         return true;
