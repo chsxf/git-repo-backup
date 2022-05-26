@@ -32,12 +32,29 @@ class GitHandler
         return true;
     }
 
+    private static function getConfigItems(): string
+    {
+        $cloneProtocol = CommandLineParser::getArgumentValue(CommandLineArgumentName::cloneProtocol);
+        if ($cloneProtocol === 'https') {
+            return '';
+        }
+
+        $sshKey = CommandLineParser::getArgumentValue(CommandLineArgumentName::sshKeyPath);
+        if (empty($sshKey)) {
+            return '';
+        }
+
+        $sshCommand = "ssh -i {$sshKey} -F /dev/null";
+        return "-c core.sshCommand=\"{$sshCommand}\"";
+    }
+
     public static function cloneRepository(RepositoryInfo $repositoryInfo, string $repositoryPath): bool
     {
-        $cloneMethod = CommandLineParser::getArgumentValue(CommandLineArgumentName::cloneProtocol);
-        $url = ($cloneMethod === 'ssh') ? $repositoryInfo->sshURL : $repositoryInfo->httpsURL;
+        $cloneProtocol = CommandLineParser::getArgumentValue(CommandLineArgumentName::cloneProtocol);
+        $url = ($cloneProtocol === 'ssh') ? $repositoryInfo->sshURL : $repositoryInfo->httpsURL;
 
-        $cmd = "git clone --branch {$repositoryInfo->defaultBranch} {$url} {$repositoryPath}";
+        $configItems = self::getConfigItems();
+        $cmd = "git {$configItems} clone --branch {$repositoryInfo->defaultBranch} {$url} {$repositoryPath}";
 
         Console::setColor(ConsoleColor::FgCyan);
         Console::empty();
@@ -51,7 +68,8 @@ class GitHandler
         $cwd = getcwd();
         chdir($repositoryPath);
 
-        $cmd = "git submodule update --init --recursive";
+        $configItems = self::getConfigItems();
+        $cmd = "git {$configItems} submodule update --init --recursive";
 
         Console::setColor(ConsoleColor::FgCyan);
         Console::empty();
@@ -67,7 +85,8 @@ class GitHandler
         $cwd = getcwd();
         chdir($repositoryPath);
 
-        $cmd = "git fetch --all --tags --prune --prune-tags --recurse-submodules";
+        $configItems = self::getConfigItems();
+        $cmd = "git {$configItems} fetch --all --tags --prune --prune-tags --recurse-submodules";
 
         Console::setColor(ConsoleColor::FgCyan);
         Console::empty();
@@ -83,7 +102,8 @@ class GitHandler
         $cwd = getcwd();
         chdir($repositoryPath);
 
-        $cmd = "git pull";
+        $configItems = self::getConfigItems();
+        $cmd = "git {$configItems} pull";
 
         Console::setColor(ConsoleColor::FgCyan);
         Console::empty();

@@ -10,6 +10,7 @@ enum CommandLineArgumentName: string
     case noGitLFS = 'no-git-lfs';
     case destPath = 'destination-path';
     case cloneProtocol = 'clone-protocol';
+    case sshKeyPath = 'ssh-key-path';
 }
 
 class CommandLineParser
@@ -187,6 +188,13 @@ class CommandLineParser
                     acceptedValues: [['github', 'bitbucket']]
                 ),
                 new CommandLineArgumentDescriptor(
+                    name: CommandLineArgumentName::cloneProtocol->value,
+                    trailingArguments: [CommandLineArgumentName::cloneProtocol->value],
+                    description: "Use HTTPS or SSH as the clone protocol\nThis setting is not case-sensitive",
+                    required: true,
+                    acceptedValues: [['https', 'ssh']]
+                ),
+                new CommandLineArgumentDescriptor(
                     name: CommandLineArgumentName::noGitLFS->value,
                     description: "If present, git-lfs is not checked or explictly used during the execution of the script",
                     required: false
@@ -199,11 +207,12 @@ class CommandLineParser
                     customValidationCallable: self::validateDestinationPath(...)
                 ),
                 new CommandLineArgumentDescriptor(
-                    name: CommandLineArgumentName::cloneProtocol->value,
-                    trailingArguments: [CommandLineArgumentName::cloneProtocol->value],
-                    description: "Use HTTPS or SSH as the clone protocol\nThis setting is not case-sensitive",
-                    required: true,
-                    acceptedValues: [['https', 'ssh']]
+                    name: 'ssh-key',
+                    trailingArguments: [CommandLineArgumentName::sshKeyPath->value],
+                    description: "Not supported on Windows\nSpecific SSH key to use with repositories, useful if you have several SSH keys for the same domain\nThe specific path will be passed to clone commands thanks to the core.sshCommand git config\nIgnored if --clone-protocal is set to 'https'",
+                    required: false,
+                    osFamilySupport: new CommandLineArgumentOSFamilySupport(false, ['Windows']),
+                    customValidationCallable: self::validateSSHKey(...)
                 )
             ];
         }
@@ -222,6 +231,16 @@ class CommandLineParser
         $destPath = self::getArgumentValue(CommandLineArgumentName::destPath);
         if (!empty($destPath) && !is_dir($destPath)) {
             Console::error("'%s' does not exist or is not a directory, and therefore is not a valid destination path", $destPath);
+            return false;
+        }
+        return true;
+    }
+
+    private static function validateSSHKey(): bool
+    {
+        $sshKeyPath = self::getArgumentValue(CommandLineArgumentName::sshKeyPath);
+        if (!empty($sshKeyPath) && !file_exists($sshKeyPath)) {
+            Console::error("'%s' does not exist, and therefore is not a valid SSH key path", $sshKeyPath);
             return false;
         }
         return true;
