@@ -1,4 +1,5 @@
 {
+  "name": "chsxf/git-repo-backup",
   "autoload": {
     "psr-4": {
       "chsxf\\GitRepoBackup\\": "src/"
