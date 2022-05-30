@@ -178,23 +178,23 @@ class CommandLineParser
                 new CommandLineArgumentDescriptor(
                     name: CommandLineArgumentName::username->value,
                     trailingArguments: [CommandLineArgumentName::username->value],
-                    description: "User name used to authenticate with the platform's API."
+                    description: "GitHub: User name used to authenticate with the platform's API.\nBitBucket Cloud: Workspace (user or organization) for which to get repositories"
                 ),
                 new CommandLineArgumentDescriptor(
                     name: CommandLineArgumentName::password->value,
                     trailingArguments: [CommandLineArgumentName::password->value],
-                    description: "Password, OAuth token, or personal access token used to authenticate with the platform's API."
+                    description: "Password used to authenticate with the platform's API\nOn GitHub, requires a personal access token\nOn BitBucket Cloud, requires an app password"
                 ),
                 new CommandLineArgumentDescriptor(
                     name: CommandLineArgumentName::platform->value,
                     trailingArguments: [CommandLineArgumentName::platform->value],
-                    description: "Platform to authenticate with (only 'GitHub' and 'BitBucket' are supported at the moment)\nThis setting is not case-sensitive",
+                    description: "Platform to authenticate with (only 'GitHub' and 'BitBucket' (BitBucket Cloud) are supported at the moment)\nThis setting is not case-sensitive",
                     acceptedValues: [['github', 'bitbucket']]
                 ),
                 new CommandLineArgumentDescriptor(
                     name: CommandLineArgumentName::cloneProtocol->value,
                     trailingArguments: [CommandLineArgumentName::cloneProtocol->value],
-                    description: "Use HTTPS or SSH as the clone protocol\nThis setting is not case-sensitive",
+                    description: "Use SSH (recommended) or HTTPS as the clone protocol\nThis setting is not case-sensitive",
                     required: true,
                     acceptedValues: [['https', 'ssh']]
                 ),
@@ -213,7 +213,7 @@ class CommandLineParser
                 new CommandLineArgumentDescriptor(
                     name: 'ssh-key',
                     trailingArguments: [CommandLineArgumentName::sshKeyPath->value],
-                    description: "Not supported on Windows\nSpecific SSH key to use with repositories, useful if you have several SSH keys for the same domain\nThe specific path will be passed to clone commands thanks to the core.sshCommand git config\nIgnored if --clone-protocal is set to 'https'",
+                    description: "Not supported on Windows\nSpecific SSH key to use with repositories, useful if you have several SSH keys for the same domain\nThe specific path will be passed to clone commands thanks to the core.sshCommand git config\nIgnored if --clone-protocol is set to 'https'",
                     required: false,
                     osFamilySupport: new CommandLineArgumentOSFamilySupport(false, ['Windows']),
                     customValidationCallable: self::validateSSHKey(...)
@@ -233,7 +233,7 @@ class CommandLineParser
                 new CommandLineArgumentDescriptor(
                     name: CommandLineArgumentName::sortBy->value,
                     trailingArguments: [CommandLineArgumentName::sortBy->value, CommandLineArgumentName::sortOrder->value],
-                    description: "Specific how repositories are sorted before being processed\nOptions are by name (default) or by size\nOrder can be ascending (asc) or descending (desc)",
+                    description: "Specific how repositories are sorted before being processed\nRepositories can be sorted by name (default) or by size\nOrder can be ascending (asc - default) or descending (desc)\nThis setting is not case-sensitive",
                     required: false,
                     acceptedValues: [['size', 'name'], ['asc', 'desc']]
                 )
