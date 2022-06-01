@@ -1,5 +1,6 @@
 {
   "name": "chsxf/git-repo-backup",
+  "license": "MIT",
   "autoload": {
     "psr-4": {
       "chsxf\\GitRepoBackup\\": "src/"
